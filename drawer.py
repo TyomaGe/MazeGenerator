@@ -1,6 +1,6 @@
 import pygame
 from enum import Enum
-from shaper import CellType
+from maze import CellType
 
 
 class MazeDrawer:
@@ -11,8 +11,7 @@ class MazeDrawer:
         self.__cols = len(matrix[0])
         self.__palette = {
             CellType.WALL: Color.GRAY,
-            CellType.EMPTY: Color.WHITE,
-            CellType.START: Color.GREEN
+            CellType.EMPTY: Color.WHITE
         }
         pygame.init()
         self.__screen = pygame.display.set_mode((1200, 800), pygame.RESIZABLE)
