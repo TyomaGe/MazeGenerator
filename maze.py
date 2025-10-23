@@ -10,32 +10,26 @@ class Directions(tuple, Enum):
     DOWN = (0, 1)
 
 
-class CellType(str, Enum):
-    WALL = 'W'
-    EMPTY = '.'
-
-
 class Maze:
     def __init__(self, width, height):
-        self.__maze = [[CellType.WALL for _ in range(width)]
-                       for _ in range(height)]
+        self.__maze = np.ones((height, width), dtype=bool)
         self.__width = width
         self.__height = height
 
     def empty(self, point):
-        self.__maze[point[1]][point[0]] = CellType.EMPTY
+        self.__maze[point[1], point[0]] = False
 
     def wall(self, point):
-        self.__maze[point[1]][point[0]] = CellType.WALL
+        self.__maze[point[1], point[0]] = True
 
     def is_wall(self, point):
-        return self.__maze[point[1]][point[0]] == CellType.WALL
+        return self.__maze[point[1], point[0]]
 
     def is_empty(self, point):
-        return not self.is_wall(point)
+        return not self.__maze[point[1], point[0]]
 
     def get_maze(self):
-        return self.__maze
+        return self.__maze.tolist()
 
     @property
     def width(self):
@@ -44,6 +38,7 @@ class Maze:
     @property
     def height(self):
         return self.__height
+
 
 class MazeGenerator:
     __DIRECTIONS = [
@@ -74,12 +69,9 @@ class MazeGenerator:
         self.__maze.empty((rmap(fx) + dx, rmap(fy) + dy))
         self.__maze.empty(self.__rpmap(s_point))
 
-    def __set_start(self, start):
-        self.__maze.empty(self.__rpmap(start))
-
-    def __set_finish(self, finish):
-        x, y = finish
-        rx, ry = self.__rpmap(finish)
+    def __delete_border_wall(self, point):
+        x, y = point
+        rx, ry = self.__rpmap(point)
         if y == 0:
             self.__maze.empty((rx, ry - 1))
         elif y == self.__lheight - 1:
@@ -89,9 +81,19 @@ class MazeGenerator:
         elif x == self.__lwidth - 1:
             self.__maze.empty((rx + 1, ry))
 
+    def __set_start(self, start):
+        self.__maze.empty(self.__rpmap(start))
+        self.__delete_border_wall(start)
+
+    def __set_finish(self, finish):
+        self.__delete_border_wall(finish)
+
     def __is_logically_inside(self, point):
         x, y = point
         return 0 <= x < self.__lwidth and 0 <= y < self.__lheight
+
+    def __get_neighbour(self, current, direction):
+        return current[0] + direction[0], current[1] + direction[1]
 
     def generate(self, lwidth, lheight, start=(0, 0), finish=(0, 0), seed=0, shortcut_coef=0.0):
         self.__lwidth = lwidth
@@ -107,7 +109,7 @@ class MazeGenerator:
             random.shuffle(self.__DIRECTIONS)
             moved = False
             for direction in self.__DIRECTIONS:
-                neighbor = tuple(np.array(current) + np.array(direction))
+                neighbor = self.__get_neighbour(current, direction)
                 if self.__is_logically_inside(neighbor):
                     if self.__maze.is_wall(self.__rpmap(neighbor)):
                         self.__connect(current, neighbor)
@@ -121,6 +123,8 @@ class MazeGenerator:
         return self.__maze.get_maze()
 
     def __add_gaps(self, shortcut_coef):
+        if shortcut_coef == 0.0:
+            return
         candidates = []
         for y in range(1, self.__maze.height - 1):
             for x in range(1, self.__maze.width - 1):
