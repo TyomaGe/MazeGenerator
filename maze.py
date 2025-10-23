@@ -119,24 +119,28 @@ class MazeGenerator:
             if not moved:
                 stack.pop()
         self.__set_finish(finish)
-        self.__add_gaps(shortcut_coef)
+        self.__add_shortcuts(shortcut_coef)
         return self.__maze.get_maze()
 
-    def __add_gaps(self, shortcut_coef):
-        if shortcut_coef == 0.0:
-            return
-        candidates = []
-        for y in range(1, self.__maze.height - 1):
-            for x in range(1, self.__maze.width - 1):
-                if self.__is_deletable(x, y):
-                    candidates.append((x, y))
-        random.shuffle(candidates)
-        shortcuts_target = int(len(candidates) * shortcut_coef)
-        for i in range(min(shortcuts_target, len(candidates))):
-            self.__maze.empty(candidates[i])
+    def __add_shortcuts(self, shortcut_coef):
+        if shortcut_coef != 0.0:
+            is_deletable = self.__is_deletable
+            is_wall = self.__maze.is_wall
+            check_fn = is_deletable if shortcut_coef < 0.9 else is_wall
+            candidates = []
+            for y in range(1, self.__maze.height - 1):
+                for x in range(1, self.__maze.width - 1):
+                    point = (x, y)
+                    if check_fn(point):
+                        candidates.append(point)
+            random.shuffle(candidates)
+            shortcuts_target = int(len(candidates) * shortcut_coef)
+            for i in range(min(shortcuts_target, len(candidates))):
+                self.__maze.empty(candidates[i])
 
-    def __is_deletable(self, x, y):
-        if self.__maze.is_empty((x, y)):
+    def __is_deletable(self, point):
+        x, y = point
+        if self.__maze.is_empty(point):
             return False
         left = self.__maze.is_empty((x - 1, y))
         right = self.__maze.is_empty((x + 1, y))
