@@ -4,34 +4,34 @@ from enum import Enum
 
 class MazeDrawer:
     def __init__(self, matrix, cell_size=40):
-        self.__matrix = matrix
-        self.__cell_size = cell_size
-        self.__rows = len(matrix)
-        self.__cols = len(matrix[0])
-        self.__palette = {
+        self._matrix = matrix
+        self._cell_size = cell_size
+        self._rows = len(matrix)
+        self._cols = len(matrix[0])
+        self._palette = {
             True: Color.GRAY,
             False: Color.WHITE
         }
         pygame.init()
-        self.__screen = pygame.display.set_mode((1200, 800), pygame.RESIZABLE)
-        self.__screen.fill(Color.BLACK)
+        self._screen = pygame.display.set_mode((1200, 800), pygame.RESIZABLE)
+        self._screen.fill(Color.BLACK)
         pygame.display.set_caption("Лабиринт")
 
-    def __draw_maze(self):
-        maze_width = self.__cols * self.__cell_size
-        maze_height = self.__rows * self.__cell_size
-        off_x = (self.__screen.get_width() - maze_width) // 2
-        off_y = (self.__screen.get_height() - maze_height) // 2
-        for y, row in enumerate(self.__matrix):
+    def _draw_maze(self):
+        maze_width = self._cols * self._cell_size
+        maze_height = self._rows * self._cell_size
+        off_x = (self._screen.get_width() - maze_width) // 2
+        off_y = (self._screen.get_height() - maze_height) // 2
+        for y, row in enumerate(self._matrix):
             for x, cell in enumerate(row):
                 rect = pygame.Rect(
-                    off_x + x * self.__cell_size,
-                    off_y + y * self.__cell_size,
-                    self.__cell_size,
-                    self.__cell_size
+                    off_x + x * self._cell_size,
+                    off_y + y * self._cell_size,
+                    self._cell_size,
+                    self._cell_size
                 )
-                color = self.__palette[cell]
-                pygame.draw.rect(self.__screen, color, rect)
+                color = self._palette[cell]
+                pygame.draw.rect(self._screen, color, rect)
         pygame.display.flip()
 
     def draw(self):
@@ -42,11 +42,11 @@ class MazeDrawer:
                 if event.type == pygame.QUIT:
                     running = False
                 elif event.type == pygame.VIDEORESIZE:
-                    self.__screen = pygame.display.set_mode(
+                    self._screen = pygame.display.set_mode(
                         event.size,
                         pygame.RESIZABLE
                     )
-            self.__draw_maze()
+            self._draw_maze()
             clock.tick(60)
         pygame.quit()
 
