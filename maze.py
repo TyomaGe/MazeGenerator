@@ -80,14 +80,14 @@ class MazeGenerator:
         rneighbour = self._rpmap(neighbour)
         return self._is_inside(neighbour) and self._maze.is_wall(rneighbour)
 
-    def _get_neighbour(self, current, direction):
+    def _get_neighbor(self, current, direction):
         return current[0] + direction[0], current[1] + direction[1]
 
-    def generate(self, lwidth, lheight, start=(0, 0), seed=0, shortcut_coef=0.0):
-        self._lwidth = lwidth
+    def generate(self, lheight, lwidth, start=(0, 0), seed=0, shortcut_coef=0.0):
         self._lheight = lheight
-        self._rwidth = self._rmap(lwidth)
+        self._lwidth = lwidth
         self._rheight = self._rmap(lheight)
+        self._rwidth = self._rmap(lwidth)
         self._maze = Maze(self._rwidth, self._rheight)
         random.seed(seed)
         self._set_start(start)
@@ -97,7 +97,7 @@ class MazeGenerator:
             random.shuffle(self._DIRECTIONS)
             moved = False
             for direction in self._DIRECTIONS:
-                neighbor = self._get_neighbour(current, direction)
+                neighbor = self._get_neighbor(current, direction)
                 if self._is_connectable(neighbor):
                     self._connect(current, neighbor)
                     stack.append(neighbor)
@@ -105,25 +105,8 @@ class MazeGenerator:
                     break
             if not moved:
                 stack.pop()
-        self.add_shortcuts(shortcut_coef)
+        self._add_shortcuts(shortcut_coef)
         return self._maze.get_maze()
-
-    def add_shortcuts(self, shortcut_coef):
-        if shortcut_coef <= 0.0:
-            return
-        is_deletable = self._is_deletable
-        is_wall = self._maze.is_wall
-        check_fn = is_deletable if shortcut_coef < 0.75 else is_wall
-        candidates = []
-        for y in range(1, self._maze.height - 1):
-            for x in range(1, self._maze.width - 1):
-                point = (x, y)
-                if check_fn(point):
-                    candidates.append(point)
-        random.shuffle(candidates)
-        shortcuts_target = int(len(candidates) * shortcut_coef)
-        for i in range(min(shortcuts_target, len(candidates))):
-            self._maze.empty(candidates[i])
 
     def _is_deletable(self, point):
         if self._maze.is_empty(point):
@@ -135,3 +118,20 @@ class MazeGenerator:
         down = self._maze.is_wall((x, y + 1))
         is_corner = (up or down) and (right or left)
         return not is_corner
+
+    def _add_shortcuts(self, shortcut_coef):
+        if shortcut_coef <= 0.0:
+            return
+        is_deletable = self._is_deletable
+        is_wall = self._maze.is_wall
+        check_fn = is_deletable if shortcut_coef < 0.75 else is_wall
+        candidates = []
+        for y in range(1, self._rheight - 1):
+            for x in range(1, self._rwidth - 1):
+                point = (x, y)
+                if check_fn(point):
+                    candidates.append(point)
+        random.shuffle(candidates)
+        shortcuts_target = int(len(candidates) * shortcut_coef)
+        for i in range(min(shortcuts_target, len(candidates))):
+            self._maze.empty(candidates[i])
